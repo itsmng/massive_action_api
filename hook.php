@@ -1,23 +1,23 @@
 <?php
 
-function plugin_skeleton_install() {
+function plugin_massive_action_api_install() {
    set_time_limit(900);
    ini_set('memory_limit', '2048M');
 
    $classesToInstall = [
-      'PluginSkeletonConfig',
-      'PluginSkeletonProfile',
+      PluginMassiveActionApiConfig::class,
+      PluginMassiveActionApiProfile::class,
    ];
 
    echo "<center>";
    echo "<table class='tab_cadre_fixe'>";
-   echo "<tr><th>".__("MySQL tables installation", "skeleton")."<th></tr>";
+   echo "<tr><th>".__("MySQL tables installation", "massive_action_api")."<th></tr>";
 
    echo "<tr class='tab_bg_1'>";
    echo "<td align='center'>";
 
    //load all classes
-   $dir  = Plugin::getPhpDir('skeleton') . "/inc/";
+   $dir  = Plugin::getPhpDir('massive_action_api') . "/inc/";
    foreach ($classesToInstall as $class) {
       if ($plug = isPluginItemType($class)) {
          $item = strtolower($plug['class']);
@@ -46,23 +46,23 @@ function plugin_skeleton_install() {
    return true;
 }
 
-function plugin_skeleton_uninstall() {
+function plugin_massive_action_api_uninstall() {
    echo "<center>";
    echo "<table class='tab_cadre_fixe'>";
-   echo "<tr><th>".__("MySQL tables uninstallation", "fields")."<th></tr>";
+   echo "<tr><th>".__("MySQL tables uninstallation", "massive_action_api")."<th></tr>";
 
    echo "<tr class='tab_bg_1'>";
    echo "<td align='center'>";
 
    $classesToUninstall = [
-      'PluginSkeletonConfig',
-      'PluginSkeletonProfile',
+      PluginMassiveActionApiConfig::class,
+      PluginMassiveActionApiProfile::class,
    ];
 
    foreach ($classesToUninstall as $class) {
       if ($plug = isPluginItemType($class)) {
 
-         $dir  = Plugin::getPhpDir('skeleton') . "/inc/";
+         $dir  = Plugin::getPhpDir('massive_action_api') . "/inc/";
          $item = strtolower($plug['class']);
 
          if (file_exists("$dir$item.class.php")) {

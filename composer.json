@@ -1,0 +1,18 @@
+{
+    "name": "itsmng/massive_action_api",
+    "autoload": {
+        "psr-4": {
+            "Itsmng\\Plugin\\MassiveActionApi\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "théodore clément",
+            "email": "213218350+thclemnt@users.noreply.github.com"
+        }
+    ],
+    "require": {
+        "zircote/swagger-php": "^5.1",
+        "nikic/fast-route": "^1.3"
+    }
+}

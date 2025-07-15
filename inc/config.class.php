@@ -1,6 +1,6 @@
 <?php
 
-class PluginSkeletonConfig extends CommonDBTM {
+class PluginMassiveActionApiConfig extends CommonDBTM {
 
     static function install() {
         global $DB;
