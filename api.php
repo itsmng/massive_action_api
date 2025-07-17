@@ -5,9 +5,7 @@ include("./src/MassiveActionApi.php");
 include("./vendor/autoload.php");
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, x-api-key');
+ini_set('session.use_cookies', 0);
 
 // Check if plugin is activated...
 if (!(new Plugin())->isActivated('massive_action_api')) {

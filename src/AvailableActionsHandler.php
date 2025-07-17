@@ -2,7 +2,6 @@
 
 namespace Itsmng\Plugin\MassiveActionApi;
 
-use CommonDBTM;
 use MassiveAction;
 
 /**
@@ -44,14 +43,14 @@ class AvailableActionsHandler
      *             type="object",
      *             @OA\Property(property="actions", type="array", @OA\Items(
      *                 type="object",
-     *                 @OA\Property(property="key", type="string"),
-     *                 @OA\Property(property="label", type="string"),
-     *                 @OA\Property(property="category", type="string")
+     *                 @OA\Property(property="key", type="string", description="The key of the action"),
+     *                 @OA\Property(property="label", type="string", description="The localized label of the action"),
+     *                 @OA\Property(property="category", type="string", description="The category of the action")
      *             )),
-     *             @OA\Property(property="itemtype", type="string"),
-     *             @OA\Property(property="is_deleted", type="integer"),
-     *             @OA\Property(property="single", type="integer"),
-     *             @OA\Property(property="count", type="integer")
+     *             @OA\Property(property="itemtype", type="string", description="The type of item"),
+     *             @OA\Property(property="is_deleted", type="integer", description="Whether the item is deleted"),
+     *             @OA\Property(property="single", type="integer", description="Whether action is for a single item"),
+     *             @OA\Property(property="count", type="integer", description="The number of available actions")
      *         )
      *     ),
      *     @OA\Response(
