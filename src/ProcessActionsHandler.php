@@ -78,7 +78,7 @@ class ProcessActionsHandler
                 'massiveaction' => $data['action'] ?? '',
                 'processor' => $processor,
                 'action' => $action,
-                'initial_items' => $data['initial_items'] ?? [],
+                'initial_items' => $data['initial_items'] ?? $data['items'] ?? [],
                 'is_deleted' => $data['is_deleted'] ?? 0,
             ];
             
