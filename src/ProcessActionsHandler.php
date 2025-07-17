@@ -34,6 +34,12 @@ class ProcessActionsHandler
      *                     "type": "array",
      *                     "items": {"type": "integer"}
      *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="action_data",
+     *                 type="object",
+     *                 description="Additional data required by the action (e.g., content for followup)",
+     *                 additionalProperties=true
      *             )
      *         )
      *     ),
@@ -57,7 +63,42 @@ class ProcessActionsHandler
     public function handle(array $data)
     {
         try {
-            $ma = new MassiveAction($data, [], 'process');
+            // Extract action_data if provided
+            $action_data = $data['action_data'] ?? [];
+            
+            $action_split = explode(':', $data['action']);
+            if (count($action_split) < 2) {
+                throw new \Exception('Invalid action format. Expected "plugin:action".');
+            }
+            $processor = $action_split[0];
+            $action = $action_split[1];
+
+            $ma_params = [
+                'items' => $data['items'] ?? [],
+                'massiveaction' => $data['action'] ?? '',
+                'processor' => $processor,
+                'action' => $action,
+                'initial_items' => $data['initial_items'] ?? [],
+                'is_deleted' => $data['is_deleted'] ?? 0,
+            ];
+            
+            $ma_params = array_merge($ma_params, $action_data);
+
+            if (empty($ma_params['items'])) {
+                http_response_code(400);
+                return ['error' => 'No items provided'];
+            }
+            if (empty($ma_params['action'])) {
+                http_response_code(400);
+                return ['error' => 'No action provided'];
+            }
+            if (empty($ma_params['processor'])) {
+                http_response_code(400);
+                return ['error' => 'No processor provided'];
+            }
+            
+            
+            $ma = new MassiveAction($ma_params, [], 'process');
             $results = $ma->process();
             http_response_code(200);
             return $results;
