@@ -6,6 +6,8 @@ use MassiveAction;
 
 class ProcessActionsHandler
 {
+    private const BATCH_SIZE = 500;
+    
     /**
      * @OA\Post(
      *     path="/process_action",
@@ -40,7 +42,8 @@ class ProcessActionsHandler
      *                 type="object",
      *                 description="Additional data required by the action (e.g., content for followup)",
      *                 additionalProperties=true
-     *             )
+     *             ),
+     *             @OA\Property(property="timeout", type="integer", description="Optional timeout in seconds for the action processing. Default is 1800 seconds (30 minutes)."),
      *         )
      *     ),
      *     @OA\Response(
@@ -62,6 +65,10 @@ class ProcessActionsHandler
      */
     public function handle(array $data)
     {
+        set_time_limit($data['timeout'] ?? 1800);
+        unset($data['timeout']);
+        // Keep connection alive
+        header('Connection: keep-alive');
         try {
             // Extract action_data if provided
             $action_data = $data['action_data'] ?? [];
@@ -96,10 +103,12 @@ class ProcessActionsHandler
                 http_response_code(400);
                 return ['error' => 'No processor provided'];
             }
-            
-            
+
             $ma = new MassiveAction($ma_params, [], 'process');
+            $ma->timer = new FakeTimer();
             $results = $ma->process();
+            unset($results['redirect']);
+            
             http_response_code(200);
             return $results;
         } catch (\Exception $e) {
