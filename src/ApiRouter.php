@@ -1,11 +1,20 @@
 <?php
 
-namespace Itsmng\Plugin\MassiveActionApi;
+namespace GlpiPlugin\MassiveActionApi;
 
 use FastRoute;
 use FastRoute\Dispatcher;
+use GlpiPlugin\MassiveActionApi\Handlers\AvailableActionsHandler;
+use GlpiPlugin\MassiveActionApi\Handlers\SpecializeActionHandler;
+use GlpiPlugin\MassiveActionApi\Handlers\ProcessActionsHandler;
+use GlpiPlugin\MassiveActionApi\Handlers\GetItemTypesHandler;
 
-class MassiveActionApi
+if (!defined('GLPI_ROOT')) {
+    define('GLPI_ROOT', realpath(dirname(__FILE__) . '/../../../..'));
+}
+include_once(GLPI_ROOT . '/inc/includes.php');
+
+class ApiRouter
 {
     private $dispatcher;
     private $iptxt;
@@ -14,14 +23,6 @@ class MassiveActionApi
 
     public function __construct()
     {
-        // Ensure GLPI environment is loaded
-        if (!defined('GLPI_ROOT')) {
-            define('GLPI_ROOT', realpath(dirname(__FILE__) . '/../../../..'));
-        }
-
-        // Load GLPI core files
-        include_once(GLPI_ROOT . '/inc/includes.php');
-
         $this->dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r) {
             $r->addRoute('GET', '/available_actions/{itemtype}', function ($itemtype) {
                 $handler = new AvailableActionsHandler();
@@ -37,15 +38,31 @@ class MassiveActionApi
                 $data = json_decode(file_get_contents('php://input'), true);
                 echo json_encode($handler->handle($data));
             });
+
+            $r->addRoute('GET', '/ui/itsm-itemtypes', function () {
+                $handler = new GetItemTypesHandler();
+                echo json_encode($handler->handle());
+            });
         });
     }
 
     private function retrieveSession()
     {
         $headers = getallheaders();
-        if (isset($headers['Session-Token'])) {
-            $sessionToken = $headers['Session-Token'];
+        $sessionToken = $headers['Session-Token'] ?? null;
 
+        // If the session token is not in the headers, check the cookies
+        if (!$sessionToken) {
+            // Dynamically search for the session token in cookies
+            foreach ($_COOKIE as $key => $value) {
+                if (preg_match('/^glpi_[^_]+$/', $key)) { // Match glpi_<random> but exclude glpi_<random>_rememberme
+                    $sessionToken = $value;
+                    break;
+                }
+            }
+        }
+
+        if ($sessionToken) {
             // Initialize GLPI session with the token
             if (session_id() !== '') {
                 session_write_close();
@@ -69,13 +86,6 @@ class MassiveActionApi
     private function initApi()
     {
         global $CFG_GLPI;
-
-        if (!defined('GLPI_ROOT')) {
-            define('GLPI_ROOT', __DIR__ . '/../../../..');
-        }
-
-        // Initialize GLPI core
-        include_once(GLPI_ROOT . '/inc/includes.php');
 
         // Check if user is properly authenticated
         if (!isset($_SESSION['glpiID']) || $_SESSION['glpiID'] <= 0) {
@@ -105,7 +115,7 @@ class MassiveActionApi
 
         // retrieve ip of client
         $this->iptxt = \Toolbox::getRemoteIpAddress();
-        $this->ipnum = (strstr($this->iptxt, ':') === false ? ip2long($this->iptxt) : '');
+        $this->ipnum = strstr($this->iptxt, ':') === false ? ip2long($this->iptxt) : '';
 
         // check ip access
         $apiclient = new \APIClient();

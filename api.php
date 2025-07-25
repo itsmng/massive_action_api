@@ -18,7 +18,7 @@ $request_uri = $_SERVER['REQUEST_URI'];
 $verb = $_SERVER['REQUEST_METHOD'];
 $uri = (isset($_SERVER['PATH_INFO'])) ? str_replace("api/", "", trim($_SERVER['PATH_INFO'], '/')) : '';
 
-$api = new Itsmng\Plugin\MassiveActionApi\MassiveActionApi();
+$api = new GlpiPlugin\MassiveActionApi\ApiRouter();
 
 if (false !== $pos = strpos($uri, '?')) {
     $uri = substr($uri, 0, $pos);

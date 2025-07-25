@@ -2,7 +2,7 @@
     "name": "itsmng/massive_action_api",
     "autoload": {
         "psr-4": {
-            "Itsmng\\Plugin\\MassiveActionApi\\": "src/"
+            "GlpiPlugin\\MassiveActionApi\\": "src/"
         }
     },
     "authors": [

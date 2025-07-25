@@ -1,7 +1,10 @@
 <?php
 
-class PluginMassiveActionApiConfig extends CommonDBTM {
+namespace GlpiPlugin\MassiveActionApi;
 
+use CommonDBTM;
+
+class PluginMassiveActionApiConfig extends CommonDBTM {
     static function install() {
         global $DB;
 
@@ -72,7 +75,6 @@ SQL;
         }
         return true;
     }
-
 
     /**
      * Displays the configuration page for the plugin

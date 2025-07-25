@@ -1,6 +1,7 @@
 <?php
 include("../../../inc/includes.php");
-require_once(Plugin::getPhpDir('massive_action_api') . "/inc/config.class.php");
+
+use GlpiPlugin\MassiveActionApi\PluginMassiveActionApiConfig;
 
 $plugin = new Plugin();
 

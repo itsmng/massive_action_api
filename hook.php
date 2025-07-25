@@ -1,5 +1,8 @@
 <?php
 
+use GlpiPlugin\MassiveActionApi\PluginMassiveActionApiConfig;
+use GlpiPlugin\MassiveActionApi\PluginMassiveActionApiProfile;
+
 function plugin_massive_action_api_install() {
    set_time_limit(900);
    ini_set('memory_limit', '2048M');
@@ -16,25 +19,11 @@ function plugin_massive_action_api_install() {
    echo "<tr class='tab_bg_1'>";
    echo "<td align='center'>";
 
-   //load all classes
-   $dir  = Plugin::getPhpDir('massive_action_api') . "/inc/";
-   foreach ($classesToInstall as $class) {
-      if ($plug = isPluginItemType($class)) {
-         $item = strtolower($plug['class']);
-         if (file_exists("$dir$item.class.php")) {
-            include_once ("$dir$item.class.php");
-         }
-      }
-   }
-
    //install
    foreach ($classesToInstall as $class) {
-      if ($plug = isPluginItemType($class)) {
-         $item =strtolower($plug['class']);
-         if (file_exists("$dir$item.class.php")) {
-            if (!call_user_func([$class,'install'])) {
-               return false;
-            }
+      if (isPluginItemType($class)) {
+         if (!call_user_func([$class,'install'])) {
+            return false;
          }
       }
    }
@@ -60,16 +49,9 @@ function plugin_massive_action_api_uninstall() {
    ];
 
    foreach ($classesToUninstall as $class) {
-      if ($plug = isPluginItemType($class)) {
-
-         $dir  = Plugin::getPhpDir('massive_action_api') . "/inc/";
-         $item = strtolower($plug['class']);
-
-         if (file_exists("$dir$item.class.php")) {
-            include_once ("$dir$item.class.php");
-            if (!call_user_func([$class,'uninstall'])) {
-               return false;
-            }
+      if (isPluginItemType($class)) {
+         if (!call_user_func([$class,'uninstall'])) {
+            return false;
          }
       }
    }

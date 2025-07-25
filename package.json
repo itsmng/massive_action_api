@@ -1,0 +1,24 @@
+{
+  "name": "massive_action_api",
+  "version": "1.0.0",
+  "description": "This plugin exposes a simple REST API that allows users to create massive actions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thclemnt/massive-action-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/thclemnt/massive-action-api/issues"
+  },
+  "homepage": "https://github.com/thclemnt/massive-action-api#readme",
+  "dependencies": {
+    "htm": "^3.1.1",
+    "preact": "^10.26.9"
+  }
+}

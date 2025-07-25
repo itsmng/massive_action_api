@@ -1,6 +1,6 @@
 <?php
 
-namespace Itsmng\Plugin\MassiveActionApi;
+namespace GlpiPlugin\MassiveActionApi;
 
 class FakeTimer {
     public function start()

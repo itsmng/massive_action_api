@@ -1,6 +1,6 @@
 <?php
 
-namespace Itsmng\Plugin\MassiveActionApi;
+namespace GlpiPlugin\MassiveActionApi\Handlers;
 
 use Exception;
 use MassiveAction;

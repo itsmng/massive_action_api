@@ -1,7 +1,8 @@
 <?php
 
-namespace Itsmng\Plugin\MassiveActionApi;
+namespace GlpiPlugin\MassiveActionApi\Handlers;
 
+use GlpiPlugin\MassiveActionApi\FakeTimer;
 use MassiveAction;
 
 class ProcessActionsHandler
