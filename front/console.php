@@ -19,6 +19,7 @@ Html::header(
     'option'
 );
 
+echo "<link rel='stylesheet' href='" . Plugin::getWebDir('massive_action_api') . "/styles/console.css' />";
 echo "<script type='module' src='" . Plugin::getWebDir('massive_action_api') . "/js/console.js'></script>";
 echo "<div id='plugin_massive_action_api_api_console'></div>";
 

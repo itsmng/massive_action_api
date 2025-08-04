@@ -75,13 +75,4 @@ SQL;
         }
         return true;
     }
-
-    /**
-     * Displays the configuration page for the plugin
-     *
-     * @return void
-     */
-    public function showConfigForm() {
-        echo "SKELETON CONFIG FORM";
-    }
 }

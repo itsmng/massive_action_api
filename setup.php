@@ -49,9 +49,6 @@ function plugin_init_massive_action_api()
     Plugin::registerClass(PluginMassiveActionApiProfile::class, ['addtabon' => 'Profile']);
     $PLUGIN_HOOKS['change_profile']['massive_action_api'] = [PluginMassiveActionApiProfile::class, 'changeProfile'];
 
-    if (Session::haveRight('pluginmassive_action_api', UPDATE)) {
-        $PLUGIN_HOOKS['config_page']['massive_action_api'] = 'front/config.form.php';
-    }
     if (Session::haveRight('pluginmassive_action_api', READ)) {
         $PLUGIN_HOOKS['menu_toadd']['massive_action_api']['plugins'] = ApiConsole::class;
     }
@@ -74,6 +71,16 @@ function massive_action_api_check_prerequisites()
 
     if (version_compare(ITSM_VERSION, MASSIVE_ACTION_API_ITSMNG_MIN_VERSION, 'lt')) {
         echo "This plugin requires ITSM >= " . MASSIVE_ACTION_API_ITSMNG_MIN_VERSION . "<br>";
+        $prerequisitesSuccess = false;
+    }
+
+    if (!is_readable(__DIR__ . '/vendor/autoload.php') || !is_file(__DIR__ . '/vendor/autoload.php')) {
+        echo "Run composer install --no-dev in the plugin directory<br>";
+        $prerequisitesSuccess = false;
+    }
+
+   if (!is_readable(__DIR__ . '/lib/.yarn-integrity') || !is_file(__DIR__ . '/lib/.yarn-integrity')) {
+        echo "Run yarn install --prod in the plugin directory<br>";
         $prerequisitesSuccess = false;
     }
 

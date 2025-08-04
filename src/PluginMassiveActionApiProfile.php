@@ -184,7 +184,6 @@ class PluginMassiveActionApiProfile extends CommonDBTM
                 'label' => __('Massive Action API', 'massive_action_api'),
                 'field' => 'pluginmassive_action_api',
                 'rights' => [
-                    UPDATE => __('Allow updating settings', 'massive_action_api'),
                     READ => __('Allow using the API & console', 'massive_action_api'),
                 ],
                 'default' => 23

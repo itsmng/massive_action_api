@@ -1,0 +1,105 @@
+# French translations for Massive Action API plugin
+# References include source file and current line numbers at time of creation.
+msgid ""
+msgstr ""
+"Project-Id-Version: massive_action_api\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fr_FR\n"
+
+#: plugins/massive_action_api/js/console.js:269
+#: plugins/massive_action_api/front/console.php:15
+msgid "Massive Action API"
+msgstr "API d’actions massives"
+
+#: plugins/massive_action_api/front/console.php:15
+msgid "Massive Action API Console"
+msgstr "Console de l’API d’actions massives"
+
+#: plugins/massive_action_api/js/console.js:276
+msgid "Select Item Type:"
+msgstr "Sélectionner le type d’élément :"
+
+#: plugins/massive_action_api/js/console.js:278
+msgid "-- Select an Item Type --"
+msgstr "-- Sélectionner un type d’élément --"
+
+#: plugins/massive_action_api/js/console.js:284
+msgid "Select Action:"
+msgstr "Sélectionner une action :"
+
+#: plugins/massive_action_api/js/console.js:286
+msgid "-- Select an Action --"
+msgstr "-- Sélectionner une action --"
+
+#: plugins/massive_action_api/js/console.js:299
+msgid "Item IDs (comma/space separated):"
+msgstr "IDs des éléments (séparés par virgules/espaces) :"
+
+#: plugins/massive_action_api/js/console.js:306
+msgid "Enter item IDs (e.g., 1, 2 3 4)"
+msgstr "Saisir les IDs des éléments (ex. : 1, 2 3 4)"
+
+#: plugins/massive_action_api/js/console.js:308
+msgid "Provide at least one ID to load action parameters specific to the selection."
+msgstr "Indiquez au moins un ID pour charger les paramètres propres à la sélection."
+
+#: plugins/massive_action_api/js/console.js:316
+msgid "Action parameters"
+msgstr "Paramètres de l’action"
+
+#: plugins/massive_action_api/js/console.js:317
+msgid "Loading action parameters…"
+msgstr "Chargement des paramètres de l’action…"
+
+#: plugins/massive_action_api/js/console.js:318
+msgid "Failed to derive action parameters from AJAX endpoint."
+msgstr "Échec de récupération des paramètres via l’endpoint AJAX."
+
+#: plugins/massive_action_api/js/console.js:319
+msgid "No specific parameters required for this action or unable to infer fields."
+msgstr "Aucun paramètre spécifique requis pour cette action ou impossible d’inférer les champs."
+
+#: plugins/massive_action_api/js/console.js:334
+msgid "Processing…"
+msgstr "Traitement…"
+
+#: plugins/massive_action_api/js/console.js:334
+msgid "Process Action"
+msgstr "Exécuter l’action"
+
+#: plugins/massive_action_api/js/console.js:343
+msgid "Error"
+msgstr "Erreur"
+
+#: plugins/massive_action_api/js/console.js:347
+msgid "Result"
+msgstr "Résultat"
+
+#: plugins/massive_action_api/js/console.js:348
+msgid "✓ Successful:"
+msgstr "✓ Réussis :"
+
+#: plugins/massive_action_api/js/console.js:349
+msgid "✗ Failed:"
+msgstr "✗ Échecs :"
+
+#: plugins/massive_action_api/js/console.js:350
+msgid "⚠ No Rights:"
+msgstr "⚠ Sans droits :"
+
+#: plugins/massive_action_api/js/console.js:352
+msgid "Messages:"
+msgstr "Messages :"
+
+#: plugins/massive_action_api/js/console.js:230
+msgid "Please fill in all required fields"
+msgstr "Veuillez renseigner tous les champs obligatoires"
+
+#: plugins/massive_action_api/js/console.js:235
+msgid "Please enter valid item IDs"
+msgstr "Veuillez saisir des IDs valides"
+
+#: plugins/massive_action_api/js/console.js:240
+msgid "Please fill in all required action fields"
+msgstr "Veuillez renseigner tous les champs obligatoires de l’action"

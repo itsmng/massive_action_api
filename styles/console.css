@@ -1,0 +1,154 @@
+:root {
+  --maapi-bg: #f6f8fa;
+  --maapi-panel: #ffffff;
+  --maapi-text: #1f2937;
+  --maapi-muted: #6b7280;
+  --maapi-border: #e5e7eb;
+  --maapi-primary: #2196F3;
+  --maapi-primary-hover: #1b82d1;
+  --maapi-success-bg: #e8f5e9;
+  --maapi-error-bg: #ffebee;
+  --maapi-radius: 8px;
+  --maapi-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(149,157,165,0.15);
+}
+
+.maapi-container {
+  box-sizing: border-box;
+  padding: 20px 40px;
+  font-family: Arial, sans-serif;
+  max-width: 1100px;
+  margin: 0 auto;
+  color: var(--maapi-text);
+}
+
+.maapi-title {
+  margin: 0 0 20px 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--maapi-text);
+}
+
+.maapi-panel {
+  background: var(--maapi-panel);
+  border: 1px solid var(--maapi-border);
+  border-radius: var(--maapi-radius);
+  box-shadow: var(--maapi-shadow);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.maapi-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: end;
+}
+
+.maapi-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 260px;
+  max-width: 360px;
+}
+
+.maapi-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--maapi-muted);
+}
+
+.maapi-select,
+.maapi-input,
+.maapi-textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--maapi-border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--maapi-text);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.maapi-select:focus,
+.maapi-input:focus,
+.maapi-textarea:focus {
+  border-color: var(--maapi-primary);
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+}
+
+.maapi-select {
+  min-width: 260px;
+  max-width: 360px;
+}
+
+.maapi-textarea {
+  width: 100%;
+  max-width: 800px;
+  height: 80px;
+  resize: vertical;
+}
+
+.maapi-params {
+  margin-top: 8px;
+}
+
+.maapi-param-field {
+  margin-bottom: 12px;
+}
+
+.maapi-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-weight: 600;
+  transition: background-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.maapi-btn--primary {
+  background: var(--maapi-primary);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.maapi-btn--primary:hover {
+  background: var(--maapi-primary-hover);
+}
+
+.maapi-btn[disabled] {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.maapi-result {
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid var(--maapi-border);
+  background: #fff;
+}
+
+.maapi-result--ok {
+  background: var(--maapi-success-bg);
+}
+
+.maapi-result--error {
+  background: var(--maapi-error-bg);
+}
+
+.maapi-help {
+  font-size: 12px;
+  color: var(--maapi-muted);
+}
+
+@media (max-width: 768px) {
+  .maapi-container {
+    padding: 16px 20px;
+  }
+  .maapi-select {
+    min-width: 220px;
+    max-width: 100%;
+  }
+}
