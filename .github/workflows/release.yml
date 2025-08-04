@@ -1,0 +1,56 @@
+name: Release workflow
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release on GitHub
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
+          coverage: none
+
+      - name: Install NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run composer install
+        run: composer install --no-dev
+
+      - name: Run yarn install
+        run: yarn install
+
+      - name: Build project
+        run: |
+          cd /home/runner/work/massive_action_api/
+          rm -rf massive_action_api/.git* massive_action_api/tools massive_action_api/.yarn* massive_action_api/README.md massive_action_api/composer.* massive_action_api/package.*
+          tar -zcvf massive_action_api-${{ github.ref_name }}.tgz massive_action_api
+
+      - name: Upload release
+        uses: actions/upload-artifact@v4
+        with:
+          name: massive_action_api-${{ github.ref_name }}.tgz
+          path: /home/runner/work/massive_action_api/massive_action_api-${{ github.ref_name }}.tgz
+      
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: /home/runner/work/massive_action_api/massive_action_api-${{ github.ref_name }}.tgz
+          body: "New release is available"
+          name: ${{ github.ref_name }}
+          draft: true
+          generate_release_notes: true
