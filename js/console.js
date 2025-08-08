@@ -1,8 +1,7 @@
 const { h, render } = preact;
-const { useState, useEffect } = preactHooks;
+const { useState, useEffect, useRef } = preactHooks;
 const html = htm.bind(h);
 
-// Utility: parse IDs from textarea (comma/space/newline separated)
 function parseIds(text) {
   return Array.from(
     new Set(
@@ -14,44 +13,20 @@ function parseIds(text) {
   );
 }
 
-// Utility: fetch action subform HTML from GLPI ajax and return text
 async function fetchActionSubform({ itemtype, ids, action }) {
-  // Build the POST body to mimic GLPI's expected payload (as seen in devtools)
-  // Key elements:
-  // - action: selected action key (e.g., "ITILFollowup:add_followup")
-  // - container: using SearchTableFor{Itemtype} to match GLPI context
-  // - is_deleted: default 0
-  // - actions[]: map of action key => label (we don't know labels here, but server mainly needs the keys present)
-  // - action_filter[]: allow selected action for the itemtype
-  // - items[itemtype][id]=id and initial_items[itemtype][id]=id for each id
-  //
-  // Note: We only include the selected action in actions and action_filter to keep payload minimal, which is enough
-  // for the endpoint to render the subform for that action given these items.
   const form = new URLSearchParams();
 
-  // Set the selected action
   form.set('action', action);
 
-  // Container naming similar to GLPI's "SearchTableForTicket" etc.
   const shortType = itemtype.replace(/^.*\\\\?/, ''); // keep class tail if namespaced
   form.set('container', `SearchTableFor${shortType}`);
-
-  // Deleted flag (0 by default)
   form.set('is_deleted', '0');
-
-  // Allow the selected action for this itemtype
   form.append(`action_filter[${action}][]`, shortType);
-
-  // Provide the actions map entry (label can be same as key if unknown; backend mainly checks presence)
   form.set(`actions[${action}]`, action);
-
-  // Items and initial_items
   ids.forEach((id) => {
     form.set(`items[${shortType}][${id}]`, String(id));
     form.set(`initial_items[${shortType}][${id}]`, String(id));
   });
-
-  // Ask for subform (GLPI uses this to render parameters)
   form.set('sub_form', '1');
 
   const res = await fetch('/ajax/dropdownMassiveAction.php', {
@@ -68,142 +43,136 @@ async function fetchActionSubform({ itemtype, ids, action }) {
   return res.text();
 }
 
-  // Utility: naive HTML -> schema extraction for common inputs
-  // Ensure we do not render or expose internal/hidden fields controlling GLPI POST flow.
-  function htmlToSchema(htmlString) {
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = htmlString;
+function htmlToSchema(htmlString) {
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = htmlString;
 
-    const fields = [];
+  const fields = [];
 
-    // Helper to get label for a control
-    function findLabel(ctrl) {
-      // Prefer a label explicitly associated via for=ID
-      if (ctrl.id) {
-        const lbl = wrapper.querySelector(`label[for="${cssEscape(ctrl.id)}"]`);
-        if (lbl) {
-          // Only take the immediate text content of the label itself,
-          // excluding any nested elements (like inputs, divs, scripts)
-          const ownText = Array.from(lbl.childNodes)
-            .filter((n) => n.nodeType === Node.TEXT_NODE)
-            .map((n) => n.textContent)
-            .join('')
-            .trim();
-          if (ownText) return ownText;
-          // Fallback to full textContent if own text is empty
-          return (lbl.textContent || '').trim();
-        }
-      }
-
-      // Fallback: look for a wrapping/preceding label
-      let node = ctrl;
-      while (node && node !== wrapper) {
-        if (node.tagName && node.tagName.toLowerCase() === 'label') {
-          const ownText = Array.from(node.childNodes)
-            .filter((n) => n.nodeType === Node.TEXT_NODE)
-            .map((n) => n.textContent)
-            .join('')
-            .trim();
-          if (ownText) return ownText;
-          return (node.textContent || '').trim();
-        }
-        node = node.previousElementSibling || node.parentElement;
-      }
-      return '';
-    }
-
-    // Decide whether a field is user-facing or internal transport-only
-    function isInternalName(name) {
-      if (!name) return true;
-      // Exclude known transport/meta fields
-      if (name === 'action' || name === 'container' || name === 'is_deleted') return true;
-      if (name.startsWith('actions[') || name.startsWith('action_filter[')) return true;
-      if (name.startsWith('items[') || name.startsWith('initial_items[')) return true;
-      // Exclude CSRF and common hidden tokens/flags
-      if (name === '_glpi_csrf_token' || name === 'sub_form') return true;
-      return false;
-    }
-
-    // CSS.escape polyfill for older environments (GLPI bundles may lack it)
-    function cssEscape(ident) {
-      if (window.CSS && typeof window.CSS.escape === 'function') {
-        return window.CSS.escape(ident);
-      }
-      return String(ident).replace(/[^a-zA-Z0-9_\-]/g, (c) => '\\' + c);
-    }
-
-    // inputs
-    wrapper.querySelectorAll('input').forEach((input) => {
-      const type = (input.getAttribute('type') || 'text').toLowerCase();
-      const name = input.getAttribute('name');
-
-      // Ignore missing name, submits/buttons, and any internal/hidden transport fields
-      if (!name) return;
-      if (['submit', 'button'].includes(type)) return;
-      if (type === 'hidden' || isInternalName(name)) return;
-
-      const schema = {
-        name,
-        label: findLabel(input) || name,
-        type: type,
-        required: input.required || false,
-        default: input.value || ''
-      };
-
-      if (type === 'checkbox' || type === 'radio') {
-        schema.default = input.checked;
-        schema.value = input.value || '1';
-      }
-
-      fields.push(schema);
-    });
-
-    // selects
-    wrapper.querySelectorAll('select').forEach((select) => {
-      const name = select.getAttribute('name');
-      if (!name || isInternalName(name)) return;
-
-      const options = Array.from(select.options).map((opt) => ({
-        value: opt.value,
-        label: opt.textContent.trim(),
-        selected: opt.selected
-      }));
-
-      fields.push({
-        name,
-        label: findLabel(select) || name,
-        type: 'select',
-        required: select.required || false,
-        multiple: select.multiple || false,
-        options,
-        default: options.find((o) => o.selected)?.value ?? (options[0]?.value ?? '')
-      });
-    });
-
-    // textareas
-    wrapper.querySelectorAll('textarea').forEach((ta) => {
-      const name = ta.getAttribute('name');
-      if (!name || isInternalName(name)) return;
-
-      fields.push({
-        name,
-        label: findLabel(ta) || name,
-        type: 'textarea',
-        required: ta.required || false,
-        default: ta.value || ta.textContent || ''
-      });
-    });
-
-    // Deduplicate by name (first wins)
-    const byName = new Map();
-    for (const f of fields) {
-      if (!byName.has(f.name)) {
-        byName.set(f.name, f);
+  // Helper to get label for a control
+  function findLabel(ctrl) {
+    // Prefer a label explicitly associated via for=ID
+    if (ctrl.id) {
+      const lbl = wrapper.querySelector(`label[for="${cssEscape(ctrl.id)}"]`);
+      if (lbl) {
+        const ownText = Array.from(lbl.childNodes)
+          .filter((n) => n.nodeType === Node.TEXT_NODE)
+          .map((n) => n.textContent)
+          .join('')
+          .trim();
+        if (ownText) return ownText;
+        return (lbl.textContent || '').trim();
       }
     }
 
-    return Array.from(byName.values());
+    // Fallback: look for a wrapping/preceding label
+    let node = ctrl;
+    while (node && node !== wrapper) {
+      if (node.tagName && node.tagName.toLowerCase() === 'label') {
+        const ownText = Array.from(node.childNodes)
+          .filter((n) => n.nodeType === Node.TEXT_NODE)
+          .map((n) => n.textContent)
+          .join('')
+          .trim();
+        if (ownText) return ownText;
+        return (node.textContent || '').trim();
+      }
+      node = node.previousElementSibling || node.parentElement;
+    }
+    return '';
   }
+
+  // Decide whether a field is user-facing or internal transport-only
+  function isInternalName(name) {
+    if (!name) return true;
+    // Exclude known transport/meta fields
+    if (name === 'action' || name === 'container' || name === 'is_deleted') return true;
+    if (name.startsWith('actions[') || name.startsWith('action_filter[')) return true;
+    if (name.startsWith('items[') || name.startsWith('initial_items[')) return true;
+    // Exclude CSRF and common hidden tokens/flags
+    if (name === '_glpi_csrf_token' || name === 'sub_form') return true;
+    return false;
+  }
+
+  function cssEscape(ident) {
+    if (window.CSS && typeof window.CSS.escape === 'function') {
+      return window.CSS.escape(ident);
+    }
+    return String(ident).replace(/[^a-zA-Z0-9_\-]/g, (c) => '\\' + c);
+  }
+
+  // inputs
+  wrapper.querySelectorAll('input').forEach((input) => {
+    const type = (input.getAttribute('type') || 'text').toLowerCase();
+    const name = input.getAttribute('name');
+
+    // Ignore missing name, submits/buttons, and any internal/hidden transport fields
+    if (!name) return;
+    if (['submit', 'button'].includes(type)) return;
+    if (type === 'hidden' || isInternalName(name)) return;
+
+    const schema = {
+      name,
+      label: findLabel(input) || name,
+      type: type,
+      required: input.required || false,
+      default: input.value || ''
+    };
+
+    if (type === 'checkbox' || type === 'radio') {
+      schema.default = input.checked;
+      schema.value = input.value || '1';
+    }
+
+    fields.push(schema);
+  });
+
+  // selects
+  wrapper.querySelectorAll('select').forEach((select) => {
+    const name = select.getAttribute('name');
+    if (!name || isInternalName(name)) return;
+
+    const options = Array.from(select.options).map((opt) => ({
+      value: opt.value,
+      label: opt.textContent.trim(),
+      selected: opt.selected
+    }));
+
+    fields.push({
+      name,
+      label: findLabel(select) || name,
+      type: 'select',
+      required: select.required || false,
+      multiple: select.multiple || false,
+      options,
+      default: options.find((o) => o.selected)?.value ?? (options[0]?.value ?? '')
+    });
+  });
+
+  // textareas
+  wrapper.querySelectorAll('textarea').forEach((ta) => {
+    const name = ta.getAttribute('name');
+    if (!name || isInternalName(name)) return;
+
+    fields.push({
+      name,
+      label: findLabel(ta) || name,
+      type: 'textarea',
+      required: ta.required || false,
+      default: ta.value || ta.textContent || ''
+    });
+  });
+
+  // Deduplicate by name (first wins)
+  const byName = new Map();
+  for (const f of fields) {
+    if (!byName.has(f.name)) {
+      byName.set(f.name, f);
+    }
+  }
+
+  return Array.from(byName.values());
+}
 
 // Render a field from schema
 function renderField(field, value, onChange) {
@@ -218,13 +187,13 @@ function renderField(field, value, onChange) {
           value=${value ?? field.default ?? ''}
           multiple=${field.multiple || false}
           onChange=${(e) => {
-            if (field.multiple) {
-              const vals = Array.from(e.target.selectedOptions).map((o) => o.value);
-              onChange(field.name, vals);
-            } else {
-              onChange(field.name, e.target.value);
-            }
-          }}
+        if (field.multiple) {
+          const vals = Array.from(e.target.selectedOptions).map((o) => o.value);
+          onChange(field.name, vals);
+        } else {
+          onChange(field.name, e.target.value);
+        }
+      }}
         >
           ${(field.options || []).map((opt) => html`<option value="${opt.value}">${opt.label}</option>`)}
         </select>
@@ -241,7 +210,7 @@ function renderField(field, value, onChange) {
             type="checkbox"
             checked=${!!checked}
             onChange=${(e) => onChange(field.name, e.target.checked ? (field.value ?? '1') : '0')}
-            style="margin-right:6px;"
+            class="maapi-input-gap"
           />
           ${label}${field.required ? ' *' : ''}
         </label>
@@ -259,7 +228,7 @@ function renderField(field, value, onChange) {
             type="checkbox"
             checked=${!!checked}
             onChange=${(e) => onChange(field.name, e.target.checked ? (field.value ?? '1') : '0')}
-            style="margin-right:6px;"
+            class="maapi-input-gap"
           />
           ${label}${field.required ? ' *' : ''}
         </label>
@@ -304,11 +273,25 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processResult, setProcessResult] = useState(null);
 
-  // New: action-defined form
   const [actionSchema, setActionSchema] = useState([]);
   const [actionFormValues, setActionFormValues] = useState({});
   const [loadingSchema, setLoadingSchema] = useState(false);
   const [schemaError, setSchemaError] = useState('');
+
+  const [batchSize, setBatchSize] = useState(50);
+  const [concurrency, setConcurrency] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [processedCount, setProcessedCount] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [etaSeconds, setEtaSeconds] = useState(null);
+  const [isCancelled, setIsCancelled] = useState(false);
+  const [processingMessages, setProcessingMessages] = useState([]);
+  const [processingErrors, setProcessingErrors] = useState([]);
+  const [aggregatedResult, setAggregatedResult] = useState({ ok: 0, ko: 0, noright: 0 });
+
+  const controllersRef = useRef(new Set()); // store active AbortControllers
+  const isCancelledRef = useRef(false);
+  const startTimeRef = useRef(null);
 
   useEffect(() => {
     fetch('/plugins/massive_action_api/api.php/ui/itsm-itemtypes', {
@@ -331,18 +314,19 @@ function App() {
     setActionSchema([]);
     setActionFormValues({});
     setSchemaError('');
-
-    if (itemType) {
-      fetch(`/plugins/massive_action_api/api.php/available_actions/${itemType}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      })
-        .then(response => response.json())
-        .then(data => setActions(data.actions || []))
-        .catch(error => console.error('Error fetching actions:', error));
-    }
   };
+
+  useEffect(() => {
+    if (!selectedItemType) return;
+    fetch(`/plugins/massive_action_api/api.php/available_actions/${selectedItemType}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+      .then(response => response.json())
+      .then(data => setActions(data.actions || []))
+      .catch(error => console.error('Error fetching actions:', error));
+  }, [selectedItemType]);
 
   const handleActionChange = async (event) => {
     const actionKey = event.target.value;
@@ -446,6 +430,49 @@ function App() {
     return true;
   };
 
+  // Update elapsed/ETA while processing
+  useEffect(() => {
+    if (!isProcessing) {
+      setElapsedSeconds(0);
+      setEtaSeconds(null);
+      return;
+    }
+    const id = setInterval(() => {
+      if (!startTimeRef.current) return;
+      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      setElapsedSeconds(elapsed);
+      const avgPerItem = processedCount ? (elapsed / processedCount) : 0;
+      const remaining = Math.max(0, totalCount - processedCount);
+      setEtaSeconds(avgPerItem ? Math.round(avgPerItem * remaining) : null);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [isProcessing, processedCount, totalCount]);
+
+  const resetProcessingState = () => {
+    controllersRef.current.forEach((c) => {
+      try { c.abort(); } catch (e) { }
+    });
+    controllersRef.current.clear();
+    isCancelledRef.current = false;
+    setIsCancelled(false);
+    setProcessingMessages([]);
+    setProcessingErrors([]);
+    setAggregatedResult({ ok: 0, ko: 0, noright: 0 });
+    setProcessedCount(0);
+    setTotalCount(0);
+    setElapsedSeconds(0);
+    setEtaSeconds(null);
+  };
+
+  const handleCancel = () => {
+    setIsCancelled(true);
+    isCancelledRef.current = true;
+    controllersRef.current.forEach((c) => {
+      try { c.abort(); } catch (e) { }
+    });
+    controllersRef.current.clear();
+  };
+
   const handleSubmit = async () => {
     if (!selectedItemType || !selectedAction || !itemIds.trim()) {
       alert(__('Please fill in all required fields', 'massive_action_api'));
@@ -463,7 +490,7 @@ function App() {
       return;
     }
 
-    // Build action_data from our action-defined form
+    // Build action_data
     const actionData = {};
     for (const f of actionSchema) {
       const name = f.name;
@@ -483,46 +510,147 @@ function App() {
 
     const [processor] = selectedAction.split(':');
 
-    const requestData = {
-      items: {
-        [selectedItemType]: ids
-      },
+    // chunks
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += batchSize) {
+      chunks.push(ids.slice(i, i + batchSize));
+    }
+
+    const requestTemplate = {
       action: selectedAction,
       processor,
-      initial_items: {
-        [selectedItemType]: ids
-      },
       action_data: actionData
     };
 
+    // reset any previous processing state
+    resetProcessingState();
     setIsProcessing(true);
     setProcessResult(null);
+    setTotalCount(ids.length);
+    startTimeRef.current = Date.now();
+    isCancelledRef.current = false;
 
-    try {
-      const response = await fetch('/plugins/massive_action_api/api.php/process_action', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData)
-      });
+    const retries = 3;
 
-      const result = await response.json();
-      setProcessResult(result);
-    } catch (error) {
-      console.error('Error processing action:', error);
-      setProcessResult({ error: 'Failed to process action' });
-    } finally {
-      setIsProcessing(false);
+    // fetcher w/ retry
+    async function fetchChunkWithRetry(chunk) {
+      let attempt = 0;
+      while (attempt <= retries && !isCancelledRef.current) {
+        attempt++;
+        const controller = new AbortController();
+        controllersRef.current.add(controller);
+
+        const body = {
+          ...requestTemplate,
+          items: { [selectedItemType]: chunk },
+          initial_items: { [selectedItemType]: chunk }
+        };
+
+        try {
+          const res = await fetch('/plugins/massive_action_api/api.php/process_action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            signal: controller.signal
+          });
+          controllersRef.current.delete(controller);
+
+          if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            throw new Error(`HTTP ${res.status} ${text}`);
+          }
+          const json = await res.json();
+          return { success: true, json };
+        } catch (err) {
+          controllersRef.current.delete(controller);
+          if (err && err.name === 'AbortError') {
+            return { aborted: true, error: err };
+          }
+          if (attempt > retries) {
+            return { success: false, error: err };
+          }
+          // backoff before retry
+          await new Promise((r) => setTimeout(r, 1000 * attempt));
+        }
+      }
+      return { success: false, error: new Error('Cancelled') };
     }
+
+    // worker pool
+    let index = 0;
+    const workers = Math.max(1, Math.min(concurrency, 4));
+    const workerPromises = Array.from({ length: workers }).map(async () => {
+      while (true) {
+        if (isCancelledRef.current) break;
+        const current = index++;
+        if (current >= chunks.length) break;
+        const chunk = chunks[current];
+        const result = await fetchChunkWithRetry(chunk);
+
+        if (result.aborted) {
+          // cancelled; stop
+          break;
+        }
+
+        if (!result.success) {
+          setProcessingErrors((prev) => prev.concat([`Chunk ${current} failed: ${result.error && result.error.message ? result.error.message : String(result.error)}`]));
+          // still count these items as processed to advance progress
+          setProcessedCount((prev) => prev + chunk.length);
+          continue;
+        }
+
+        const json = result.json || {};
+        setAggregatedResult((prev) => ({
+          ok: prev.ok + (json.ok || 0),
+          ko: prev.ko + (json.ko || 0),
+          noright: prev.noright + (json.noright || 0)
+        }));
+
+        if (json.messages && Array.isArray(json.messages) && json.messages.length) {
+          setProcessingMessages((prev) => prev.concat(json.messages));
+        }
+
+        setProcessedCount((prev) => prev + chunk.length);
+      }
+    });
+
+    // wait for workers to finish
+    await Promise.all(workerPromises);
+
+    // aggregate results
+    const final = {
+      ok: aggregatedResult.ok,
+      ko: aggregatedResult.ko,
+      noright: aggregatedResult.noright,
+      messages: processingMessages,
+      errors: processingErrors,
+      cancelled: isCancelledRef.current
+    };
+
+    setProcessResult(final);
+    setIsProcessing(false);
+    // clear controllers
+    controllersRef.current.forEach((c) => {
+      try { c.abort(); } catch (e) { }
+    });
+    controllersRef.current.clear();
   };
+
+  // helpers for rendering time
+  function formatSeconds(s) {
+    if (s === null || s === undefined) return '—';
+    const hh = Math.floor(s / 3600);
+    const mm = Math.floor((s % 3600) / 60);
+    const ss = s % 60;
+    return `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`;
+  }
 
   return html`
     <div class="maapi-container">
       <h1 class="maapi-title">${__('Massive Action API', 'massive_action_api')}</h1>
 
       <div class="maapi-panel">
-        <div class="maapi-topbar">
+        <div class="maapi-topbar maapi-topbar--wrap">
           <div class="maapi-field">
             <label for="itemType" class="maapi-label">${__('Select Item Type:', 'massive_action_api')}</label>
             <select id="itemType" onChange=${handleItemTypeChange} class="maapi-select">
@@ -541,11 +669,37 @@ function App() {
             </div>
           `}
         </div>
+        ${(selectedAction || '').length > 0 && html`
+          <div class="maapi-topbar maapi-topbar--nowrap">
+            <div class="maapi-field maapi-field--small">
+              <label class="maapi-label">${__('Batch size:', 'massive_action_api')}</label>
+              <input
+                type="number"
+                min="1"
+                class="maapi-input maapi-input--small"
+                value=${batchSize}
+                onInput=${(e) => setBatchSize(Math.max(1, parseInt(e.target.value || '10', 10)))}
+              />
+            </div>
+            <div class="maapi-field maapi-field--small">
+              <label class="maapi-label">${__('Concurrency:', 'massive_action_api')}</label>
+              <select
+                class="maapi-select maapi-select--small"
+                value=${concurrency}
+                onChange=${(e) => setConcurrency(parseInt(e.target.value, 10))}
+              >
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+          </div>
+        `}
       </div>
 
       ${(selectedAction || '').length > 0 && html`
         <div class="maapi-panel">
-          <div class="maapi-field" style="max-width: 820px;">
+          <div class="maapi-field maapi-field--wide">
             <label for="itemIds" class="maapi-label">${__('Item IDs (comma/space separated):', 'massive_action_api')}</label>
             <textarea
               id="itemIds"
@@ -561,7 +715,7 @@ function App() {
 
       ${(selectedAction || '').length > 0 && html`
         <div class="maapi-panel">
-          <h2 class="maapi-title" style="font-size:18px; margin-bottom: 10px;">${__('Action parameters', 'massive_action_api')}</h2>
+          <h2 class="maapi-title maapi-subtitle">${__('Action parameters', 'massive_action_api')}</h2>
           ${loadingSchema && html`<div class="maapi-help">${__('Loading action parameters…', 'massive_action_api')}</div>`}
           ${schemaError && html`<div class="maapi-result maapi-result--error">${__('Failed to derive action parameters from AJAX endpoint.', 'massive_action_api')}</div>`}
           ${!loadingSchema && !schemaError && actionSchema.length === 0 && html`
@@ -575,7 +729,7 @@ function App() {
         </div>`}
 
       ${(selectedAction || '').length > 0 && html`
-        <div class="maapi-panel" style="display:flex; gap: 12px; align-items:center;">
+        <div class="maapi-panel maapi-panel--actions">
           <button 
             onClick=${handleSubmit}
             disabled=${isProcessing}
@@ -583,26 +737,79 @@ function App() {
           >
             ${isProcessing ? __('Processing…', 'massive_action_api') : __('Process Action', 'massive_action_api')}
           </button>
+
+          ${isProcessing && html`
+            <button
+              onClick=${handleCancel}
+              class="maapi-btn maapi-cancel-btn"
+            >
+              ${__('Cancel', 'massive_action_api')}
+            </button>
+          `}
         </div>`}
+
+      ${isProcessing && html`
+        <div class="maapi-panel">
+          <div class="maapi-progress-wrapper">
+            <div class="maapi-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow=${totalCount ? Math.round((processedCount / totalCount) * 100) : 0}>
+              <div class="maapi-progress__bar" style=${`width:${totalCount ? Math.round((processedCount / totalCount) * 100) : 0}%`}></div>
+            </div>
+          </div>
+          <div class="maapi-meta">
+            <div>${__('Processed:', 'massive_action_api')} ${processedCount}/${totalCount}</div>
+            <div>${__('Elapsed:', 'massive_action_api')} ${formatSeconds(elapsedSeconds)}</div>
+            <div>${__('ETA:', 'massive_action_api')} ${etaSeconds !== null ? formatSeconds(etaSeconds) : '—'}</div>
+            <div>${__('Batch size:', 'massive_action_api')} ${batchSize}</div>
+            <div>${__('Concurrency:', 'massive_action_api')} ${concurrency}</div>
+          </div>
+          ${processingMessages.length > 0 && html`
+            <div class="maapi-section">
+              <strong>${__('Messages:', 'massive_action_api')}</strong>
+              <ul class="maapi-list">
+                ${processingMessages.map(m => html`<li>${m}</li>`)}
+              </ul>
+            </div>
+          `}
+          ${processingErrors.length > 0 && html`
+            <div class="maapi-section">
+              <strong class="maapi-errors-title">${__('Errors:', 'massive_action_api')}</strong>
+              <ul class="maapi-list maapi-list--errors">
+                ${processingErrors.map(e => html`<li>${e}</li>`)}
+              </ul>
+            </div>
+          `}
+        </div>
+      `}
 
       ${processResult && html`
         <div class="maapi-panel">
           <div class="maapi-result ${processResult.error ? 'maapi-result--error' : 'maapi-result--ok'}">
             ${processResult.error ? html`
-              <h3 style="color: #c62828; margin: 0 0 10px 0;">${__('Error', 'massive_action_api')}</h3>
-              <p style="margin: 0;">${processResult.error}</p>
+              <h3 class="maapi-result__title maapi-result__title--error">${__('Error', 'massive_action_api')}</h3>
+              <p class="maapi-result__line">${processResult.error}</p>
             ` : html`
-              <h3 style="color: #2e7d32; margin: 0 0 10px 0;">${__('Result', 'massive_action_api')}</h3>
-              <p style="margin: 0 0 5px 0;">${__('✓ Successful:', 'massive_action_api')} ${processResult.ok || 0}</p>
-              <p style="margin: 0 0 5px 0;">${__('✗ Failed:', 'massive_action_api')} ${processResult.ko || 0}</p>
-              <p style="margin: 0 0 5px 0;">${__('⚠ No Rights:', 'massive_action_api')} ${processResult.noright || 0}</p>
+              <h3 class="maapi-result__title maapi-result__title--ok">${__('Result', 'massive_action_api')}</h3>
+              <p class="maapi-result__line maapi-result__line--small">${__('✓ Successful:', 'massive_action_api')} ${processResult.ok || aggregatedResult.ok || 0}</p>
+              <p class="maapi-result__line maapi-result__line--small">${__('✗ Failed:', 'massive_action_api')} ${processResult.ko || aggregatedResult.ko || 0}</p>
+              <p class="maapi-result__line maapi-result__line--small">${__('⚠ No Rights:', 'massive_action_api')} ${processResult.noright || aggregatedResult.noright || 0}</p>
               ${processResult.messages && processResult.messages.length > 0 && html`
-                <div style="margin-top: 10px;">
+                <div class="maapi-section">
                   <strong>${__('Messages:', 'massive_action_api')}</strong>
-                  <ul style="margin: 5px 0 0 0; padding-left: 20px;">
+                  <ul class="maapi-list">
                     ${processResult.messages.map(msg => html`<li>${msg}</li>`)}
                   </ul>
                 </div>
+              `}
+              ${processResult.errors && processResult.errors.length > 0 && html`
+                <div class="maapi-section">
+                  <strong class="maapi-errors-title">${__('Errors:', 'massive_action_api')}</strong>
+                  <ul class="maapi-list maapi-list--errors">
+                    ${processResult.errors.map(msg => html`<li>${msg}</li>`)}
+                  </ul>
+                </div>
+              `}
+              ${processResult.cancelled && html`
+                <div class="maapi-section maapi-cancelled"><strong>${__('Processing was cancelled by user.', 'massive_action_api')}</strong></div>
               `}
             `}
           </div>

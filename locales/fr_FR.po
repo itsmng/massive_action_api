@@ -103,3 +103,35 @@ msgstr "Veuillez saisir des IDs valides"
 #: plugins/massive_action_api/js/console.js:240
 msgid "Please fill in all required action fields"
 msgstr "Veuillez renseigner tous les champs obligatoires de l’action"
+
+#: plugins/massive_action_api/js/console.js:###
+msgid "Batch size:"
+msgstr "Taille de lot :"
+
+#: plugins/massive_action_api/js/console.js:###
+msgid "Concurrency:"
+msgstr "Concurrence :"
+
+#: plugins/massive_action_api/js/console.js:###
+msgid "Cancel"
+msgstr "Annuler"
+
+#: plugins/massive_action_api/js/console.js:###
+msgid "Processed:"
+msgstr "Traités :"
+
+#: plugins/massive_action_api/js/console.js:###
+msgid "Elapsed:"
+msgstr "Écoulé :"
+
+#: plugins/massive_action_api/js/console.js:###
+msgid "ETA:"
+msgstr "ETA :"
+
+#: plugins/massive_action_api/js/console.js:###
+msgid "Errors:"
+msgstr "Erreurs :"
+
+#: plugins/massive_action_api/js/console.js:###
+msgid "Processing was cancelled by user."
+msgstr "Le traitement a été annulé par l'utilisateur."

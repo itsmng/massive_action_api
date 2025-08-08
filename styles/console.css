@@ -9,7 +9,8 @@
   --maapi-success-bg: #e8f5e9;
   --maapi-error-bg: #ffebee;
   --maapi-radius: 8px;
-  --maapi-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(149,157,165,0.15);
+  --maapi-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(149, 157, 165, 0.15);
+  --maapi-control-h: 36px;
 }
 
 .maapi-container {
@@ -84,8 +85,8 @@
 
 .maapi-textarea {
   width: 100%;
-  max-width: 800px;
-  height: 80px;
+  max-width: 1000px;
+  height: 120px;
   resize: vertical;
 }
 
@@ -111,7 +112,7 @@
 .maapi-btn--primary {
   background: var(--maapi-primary);
   color: #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .maapi-btn--primary:hover {
@@ -143,10 +144,157 @@
   color: var(--maapi-muted);
 }
 
+.maapi-topbar--wrap {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.maapi-topbar--nowrap {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: nowrap;
+  margin-top: 12px;
+}
+
+.maapi-batch-controls {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.maapi-inline-label {
+  margin-right: 6px;
+  margin-left: 12px;
+  font-size: 13px;
+  color: var(--maapi-muted);
+}
+
+.maapi-input--small {
+  width: 80px;
+  height: var(--maapi-control-h);
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+
+.maapi-field--small {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.maapi-select--small {
+  width: 80px;
+  height: var(--maapi-control-h);
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+
+.maapi-panel--actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.maapi-cancel-btn {
+  background: #f44336;
+  color: white;
+}
+
+.maapi-progress-wrapper {
+  margin-bottom: 8px;
+}
+
+.maapi-progress {
+  height: 14px;
+  width: 100%;
+  background: #eee;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.maapi-progress__bar {
+  height: 14px;
+  background: var(--maapi-primary);
+  transition: width 300ms;
+  width: 0%;
+}
+
+.maapi-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: nowrap;
+  margin-top: 8px;
+}
+
+.maapi-section {
+  margin-top: 8px;
+}
+
+.maapi-list {
+  margin: 5px 0 0 0;
+  padding-left: 20px;
+}
+
+.maapi-list--errors {
+  color: #c62828;
+}
+
+.maapi-errors-title {
+  color: #c62828;
+}
+
+.maapi-result__title {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+}
+
+.maapi-result__title--error {
+  color: #c62828;
+}
+
+.maapi-result__title--ok {
+  color: #2e7d32;
+}
+
+.maapi-result__line {
+  margin: 0 0 5px 0;
+}
+
+.maapi-result__line--small {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+}
+
+.maapi-cancelled {
+  margin-top: 10px;
+  color: #c62828;
+}
+
+.maapi-field--wide {
+  max-width: 1000px;
+}
+
+.maapi-subtitle {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.maapi-input-gap {
+  margin-right: 6px;
+}
+
 @media (max-width: 768px) {
   .maapi-container {
     padding: 16px 20px;
   }
+
   .maapi-select {
     min-width: 220px;
     max-width: 100%;
